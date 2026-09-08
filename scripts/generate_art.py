@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Render a dot-matrix study of dynamic equilibrium. Requires Pillow.
+"""Render two interlinked dot-matrix rings in equilibrium. Requires Pillow.
 
 Run: python3 scripts/generate_art.py
 Recolor: --light-ink '#24292f' --dark-ink '#e6edf3'
-Two equal forms orbit a fixed center. Every moving point has an opposite
-partner, preserving balance throughout a periodic, seamless animation.
+Two equally sized rings share a continuous tumble. Dots flow in opposite
+directions along their surfaces. No center marker or orbital guide is drawn.
 """
 
 import argparse
@@ -22,51 +22,42 @@ TAU = math.tau
 
 
 def geometry():
-    points = []
-    # Hollow, equally weighted shells, each with the same latitude lattice.
-    for latitude in range(1, 16):
-        v = math.pi * latitude / 16
-        count = max(6, round(36 * math.sin(v)))
-        for longitude in range(count):
-            u = TAU * longitude / count
-            x = 1.75 + 0.78 * math.sin(v) * math.cos(u)
-            y = 0.78 * math.sin(v) * math.sin(u)
-            z = 0.78 * math.cos(v)
-            points.extend(((x, y, z, "shell"), (-x, -y, -z, "shell")))
-    # Shared orbital track and a sparse axle make the counterbalance visible.
-    for index in range(96):
-        u = TAU * index / 96
-        points.append((1.75 * math.cos(u), 1.75 * math.sin(u), 0, "orbit"))
-    for index in range(1, 13):
-        x = index * 0.072
-        points.extend(((x, 0, 0, "axle"), (-x, 0, 0, "axle")))
-    return points
+    # Equal toroidal surfaces in perpendicular planes form a Hopf link.
+    return [
+        (TAU * ring / 80, TAU * spoke / 8, side)
+        for side in (-1, 1)
+        for ring in range(80)
+        for spoke in range(8)
+    ]
 
 
 def project(points, phase):
-    # Orthographic projection preserves the exact visual midpoint. The whole
-    # system gently tilts while the equally sized forms exchange positions.
-    pitch = 0.68 + 0.18 * math.sin(phase)
-    roll = -0.2 + 0.12 * math.sin(2 * phase)
-    co, so = math.cos(phase), math.sin(phase)
+    # Perspective, tumbling silhouettes and depth-sized dots restore the
+    # sculptural quality of the original trefoil. Every motion is periodic.
+    yaw = phase + 0.45
+    pitch = 0.58 + 0.30 * math.sin(phase)
+    roll = -0.38 + 0.20 * math.sin(2 * phase)
+    cy, sy = math.cos(yaw), math.sin(yaw)
     cp, sp = math.cos(pitch), math.sin(pitch)
     cr, sr = math.cos(roll), math.sin(roll)
     projected = []
-    for x, y, z, kind in points:
-        x, y = x * co - y * so, x * so + y * co
+    for u, v, side in points:
+        angle = u + side * phase
+        tube = 1.18 + 0.25 * math.cos(v)
+        x = side * 0.72 + tube * math.cos(angle)
+        y, z = tube * math.sin(angle), 0.25 * math.sin(v)
+        if side == 1:
+            y, z = z, y
+        x, z = x * cy + z * sy, -x * sy + z * cy
         y, z = y * cp - z * sp, y * sp + z * cp
         x, y = x * cr - y * sr, x * sr + y * cr
+        perspective = 7 / (7 - z)
         depth = max(0, min(1, (z + 2.5) / 5))
-        if kind == "shell":
-            radius = 0.34 + 0.50 * depth
-            light = 0.12 + 0.85 * depth
-        elif kind == "orbit":
-            radius, light = 0.36, 0.08 + 0.16 * depth
-        else:
-            radius, light = 0.32, 0.3
-        projected.append((z, WIDTH / 2 + x * 24,
-                          HEIGHT / 2 + y * 24, radius, light))
-    projected.append((3, WIDTH / 2, HEIGHT / 2, 1.35, 0.95))
+        wave = (0.5 + 0.5 * math.cos(2 * angle - side * phase + v)) ** 4
+        radius = (0.31 + 0.43 * depth + 0.10 * wave) * perspective
+        light = max(0, min(1, 0.10 + 0.68 * depth + 0.22 * wave))
+        projected.append((z, WIDTH / 2 + x * 26 * perspective,
+                          HEIGHT / 2 + y * 26 * perspective, radius, light))
     return sorted(projected)
 
 
