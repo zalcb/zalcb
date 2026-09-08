@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Render a rotating dot-matrix trefoil. Requires Pillow.
+"""Render a dot-matrix study of dynamic equilibrium. Requires Pillow.
 
 Run: python3 scripts/generate_art.py
 Recolor: --light-ink '#24292f' --dark-ink '#e6edf3'
-All motion is periodic, so the animation loops without a pause or reset.
+Two equal forms orbit a fixed center. Every moving point has an opposite
+partner, preserving balance throughout a periodic, seamless animation.
 """
 
 import argparse
@@ -16,61 +17,56 @@ from PIL import Image, ImageColor, ImageDraw
 ROOT = Path(__file__).resolve().parents[1]
 WIDTH, HEIGHT = 168, 144
 SCALE = 2
-FRAMES = 160
+FRAMES = 200
 TAU = math.tau
-
-
-def center(u):
-    radius = 2 + 0.65 * math.cos(3 * u)
-    return radius * math.cos(2 * u), radius * math.sin(2 * u), math.sin(3 * u)
-
-
-def normalize(v):
-    length = math.sqrt(sum(x * x for x in v))
-    return tuple(x / length for x in v)
 
 
 def geometry():
     points = []
-    for ring in range(112):
-        u = TAU * ring / 112
-        c = center(u)
-        before, after = center(u - 0.001), center(u + 0.001)
-        tangent = normalize(tuple(b - a for a, b in zip(before, after)))
-        normal = normalize((-tangent[1], tangent[0], 0))
-        tx, ty, tz = tangent
-        nx, ny, nz = normal
-        binormal = (ty * nz - tz * ny, tz * nx - tx * nz, tx * ny - ty * nx)
-        for spoke in range(8):
-            v = TAU * spoke / 8
-            point = tuple(
-                axis + 0.25 * (math.cos(v) * n + math.sin(v) * b)
-                for axis, n, b in zip(c, normal, binormal)
-            )
-            points.append((*point, u, v))
+    # Hollow, equally weighted shells, each with the same latitude lattice.
+    for latitude in range(1, 16):
+        v = math.pi * latitude / 16
+        count = max(6, round(36 * math.sin(v)))
+        for longitude in range(count):
+            u = TAU * longitude / count
+            x = 1.75 + 0.78 * math.sin(v) * math.cos(u)
+            y = 0.78 * math.sin(v) * math.sin(u)
+            z = 0.78 * math.cos(v)
+            points.extend(((x, y, z, "shell"), (-x, -y, -z, "shell")))
+    # Shared orbital track and a sparse axle make the counterbalance visible.
+    for index in range(96):
+        u = TAU * index / 96
+        points.append((1.75 * math.cos(u), 1.75 * math.sin(u), 0, "orbit"))
+    for index in range(1, 13):
+        x = index * 0.072
+        points.extend(((x, 0, 0, "axle"), (-x, 0, 0, "axle")))
     return points
 
 
 def project(points, phase):
-    # Full rotation plus a gentle rocking motion; both return exactly at 2π.
-    yaw = phase
-    pitch = 0.62 + 0.28 * math.sin(phase)
-    roll = -0.25 + 0.15 * math.sin(2 * phase)
-    cy, sy = math.cos(yaw), math.sin(yaw)
+    # Orthographic projection preserves the exact visual midpoint. The whole
+    # system gently tilts while the equally sized forms exchange positions.
+    pitch = 0.68 + 0.18 * math.sin(phase)
+    roll = -0.2 + 0.12 * math.sin(2 * phase)
+    co, so = math.cos(phase), math.sin(phase)
     cp, sp = math.cos(pitch), math.sin(pitch)
     cr, sr = math.cos(roll), math.sin(roll)
     projected = []
-    for x, y, z, u, v in points:
-        x, z = x * cy + z * sy, -x * sy + z * cy
+    for x, y, z, kind in points:
+        x, y = x * co - y * so, x * so + y * co
         y, z = y * cp - z * sp, y * sp + z * cp
         x, y = x * cr - y * sr, x * sr + y * cr
-        perspective = 8 / (8 - z)
-        depth = max(0, min(1, (z + 3) / 6))
-        wave = (0.5 + 0.5 * math.cos(2 * u - 2 * phase + v * 0.4)) ** 4
-        light = max(0, min(1, 0.12 + 0.68 * depth + 0.20 * wave))
-        radius = (0.36 + 0.44 * depth + 0.12 * wave) * perspective
-        projected.append((z, WIDTH / 2 + x * 21 * perspective,
-                          HEIGHT / 2 + y * 21 * perspective, radius, light))
+        depth = max(0, min(1, (z + 2.5) / 5))
+        if kind == "shell":
+            radius = 0.34 + 0.50 * depth
+            light = 0.12 + 0.85 * depth
+        elif kind == "orbit":
+            radius, light = 0.36, 0.08 + 0.16 * depth
+        else:
+            radius, light = 0.32, 0.3
+        projected.append((z, WIDTH / 2 + x * 24,
+                          HEIGHT / 2 + y * 24, radius, light))
+    projected.append((3, WIDTH / 2, HEIGHT / 2, 1.35, 0.95))
     return sorted(projected)
 
 
@@ -106,13 +102,13 @@ def main():
     for theme, ink in (("light", args.light_ink), ("dark", args.dark_ink)):
         colors = palette(ImageColor.getrgb(ink), theme)
         frames = [render(points, TAU * frame / FRAMES, colors) for frame in range(FRAMES)]
-        frames[0].save(args.output / f"trefoil-{theme}.png", transparency=0)
+        frames[0].save(args.output / f"equilibrium-{theme}.png", transparency=0)
         frames[0].save(
-            args.output / f"trefoil-{theme}.gif", save_all=True,
+            args.output / f"equilibrium-{theme}.gif", save_all=True,
             append_images=frames[1:], duration=50, loop=0,
             transparency=0, background=0, disposal=2, optimize=False,
         )
-        print(f"Generated {theme} trefoil: {FRAMES} frames, {FRAMES * 50} ms")
+        print(f"Generated {theme} equilibrium: {FRAMES} frames, {FRAMES * 50} ms")
 
 
 if __name__ == "__main__":
