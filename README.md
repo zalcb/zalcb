@@ -1,8 +1,8 @@
 <picture>
-  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/signature-dark.png">
-  <source media="(prefers-reduced-motion: reduce)" srcset="assets/signature-light.png">
-  <source media="(prefers-color-scheme: dark)" srcset="assets/signature-dark.gif">
-  <img src="assets/signature-light.gif" alt="bz — animated dot-matrix monogram" width="108" height="72">
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/trefoil-dark.png">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/trefoil-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/trefoil-dark.gif">
+  <img src="assets/trefoil-light.gif" alt="Rotating trefoil knot drawn with dots" width="168" height="144">
 </picture>
 
 <h3><samp>bruno zalcberg</samp></h3>
