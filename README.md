@@ -1,9 +1,11 @@
-# Hi! I'm Bruno 👋
+<h3><samp>bruno zalcberg</samp></h3>
 
-I'm a 21 year-old Computer Engineering student at Insper, São Paulo, Brazil.
+<p><samp>
+computer engineering student @ insper<br>
+previously on exchange @ uc berkeley<br>
+são paulo, brazil
+</samp></p>
 
-Just came back from a semester at UC Berkeley as an exchange student.
+<p><samp>Python · C · C++ · Rust · OCaml</samp></p>
 
-Please feel free to check out my [personal website](https://zalcberg.me) if you want to know more about my experience and projects! 
-
-[![My Skills](https://skillicons.dev/icons?i=python,c,cpp,rust,ocaml)](https://skillicons.dev)
+<p><a href="https://zalcberg.me"><samp>zalcberg.me ↗</samp></a></p>
